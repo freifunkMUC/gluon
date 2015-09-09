@@ -132,7 +132,7 @@ endif
 
 ## Ubiquiti (everything)
 $(eval $(call GluonProfile,UBNT))
-$(eval $(call GluonModel,UBNT,ubnt-air-gateway,ubiquiti-air-gateway))
+$(eval $(call GluonModel,UBNT,ubnt-air-gateway,ubiquiti-airgateway))
 
 $(eval $(call GluonModel,UBNT,ubnt-bullet-m,ubiquiti-bullet-m))
 $(eval $(call GluonModel,UBNT,ubnt-bullet-m,ubiquiti-loco-m))
