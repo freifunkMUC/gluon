@@ -138,10 +138,10 @@ fastd_mesh_vpn
         methods = {'salsa2012+umac'},
 	-- enabled = true,
 	-- configurable = true,
-        mtu = 1426,
+        mtu = 1280,
         groups = {
           backbone = {
-            limit = 2,
+            limit = 1,
             peers = {
               peer1 = {
                 key = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
