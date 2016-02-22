@@ -26,15 +26,19 @@ end
 local os = os
 local string = string
 local tonumber = tonumber
+local ipairs = ipairs
+local table = table
 
 local nixio = require 'nixio'
 local sysconfig = require 'gluon.sysconfig'
+local site = require 'gluon.site_config'
+local uci = require('luci.model.uci').cursor()
 
 
 module 'gluon.util'
 
 function exec(...)
-	return os.execute(escape_args('', ...))
+	return os.execute(escape_args('', 'exec', ...))
 end
 
 -- Removes all lines starting with a prefix from a file, optionally adding a new one
@@ -46,6 +50,12 @@ function replace_prefix(file, prefix, add)
 	end
 	f:close()
 	os.rename(tmp, file)
+end
+
+function readline(fd)
+	local line = fd:read('*l')
+	fd:close()
+	return line
 end
 
 function lock(file)
@@ -69,6 +79,7 @@ end
 -- (2, n): client interface for the n'th radio
 -- (3, n): adhoc interface for n'th radio
 -- (4, 0): mesh VPN
+-- (5, n): mesh interface for n'th radio (802.11s)
 function generate_mac(f, i)
   local m1, m2, m3, m4, m5, m6 = string.match(sysconfig.primary_mac, '(%x%x):(%x%x):(%x%x):(%x%x):(%x%x):(%x%x)')
   m1 = nixio.bit.bor(tonumber(m1, 16), 0x02)
@@ -76,4 +87,27 @@ function generate_mac(f, i)
   m3 = (tonumber(m3, 16)+i) % 0x100
 
   return string.format('%02x:%02x:%02x:%s:%s:%s', m1, m2, m3, m4, m5, m6)
+end
+
+-- Iterate over all radios defined in UCI calling
+-- f(radio, index, site.wifiX) for each radio found while passing
+--  site.wifi24 for 2.4 GHz devices and site.wifi5 for 5 GHz ones.
+function iterate_radios(f)
+  local radios = {}
+
+  uci:foreach('wireless', 'wifi-device',
+    function(s)
+      table.insert(radios, s['.name'])
+    end
+  )
+
+  for index, radio in ipairs(radios) do
+    local hwmode = uci:get('wireless', radio, 'hwmode')
+
+    if hwmode == '11g' or hwmode == '11ng' then
+      f(radio, index, site.wifi24)
+    elseif hwmode == '11a' or hwmode == '11na' then
+      f(radio, index, site.wifi5)
+    end
+  end
 end

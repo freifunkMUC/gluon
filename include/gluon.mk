@@ -2,19 +2,29 @@ ifneq ($(__gluon_inc),1)
 __gluon_inc=1
 
 GLUON_SITEDIR ?= $(GLUONDIR)/site
-GLUON_IMAGEDIR ?= $(GLUONDIR)/images
 GLUON_BUILDDIR ?= $(GLUONDIR)/build
 
 GLUON_ORIGOPENWRTDIR := $(GLUONDIR)/openwrt
 GLUON_SITE_CONFIG := $(GLUON_SITEDIR)/site.conf
 
-export GLUONDIR GLUON_SITEDIR GLUON_SITE_CONFIG GLUON_IMAGEDIR GLUON_BUILDDIR
+GLUON_OUTPUTDIR ?= $(GLUONDIR)/output
+GLUON_IMAGEDIR ?= $(GLUON_OUTPUTDIR)/images
+GLUON_MODULEDIR ?= $(GLUON_OUTPUTDIR)/modules
+
+GLUON_OPKG_KEY ?= $(GLUON_BUILDDIR)/gluon-opkg-key
+
+export GLUONDIR GLUON_SITEDIR GLUON_BUILDDIR GLUON_SITE_CONFIG GLUON_OUTPUTDIR GLUON_IMAGEDIR GLUON_MODULEDIR
 
 
 BOARD_BUILDDIR = $(GLUON_BUILDDIR)/$(GLUON_TARGET)
 BOARD_KDIR = $(BOARD_BUILDDIR)/kernel
 
 export BOARD_BUILDDIR
+
+
+LINUX_RELEASE := 2
+export LINUX_RELEASE
+
 
 GLUON_OPENWRTDIR = $(BOARD_BUILDDIR)/openwrt
 
@@ -35,8 +45,8 @@ export GLUON_LANGS
 ifeq ($(OPENWRT_BUILD),1)
 ifeq ($(GLUON_TOOLS),1)
 
-CONFIG_VERSION_REPO := $(shell $(GLUONDIR)/scripts/site.sh opkg_repo || echo http://downloads.openwrt.org/barrier_breaker/14.07/%S/packages)
-export CONFIG_VERSION_REPO
+GLUON_OPENWRT_FEEDS := base packages luci routing telephony management
+export GLUON_OPENWRT_FEEDS
 
 GLUON_SITE_CODE := $(shell $(GLUONDIR)/scripts/site.sh site_code)
 export GLUON_SITE_CODE
@@ -65,7 +75,7 @@ GLUON_TARGET_$$(gluon_target)_BOARD := $(1)
 GLUON_TARGET_$$(gluon_target)_SUBTARGET := $(2)
 endef
 
-GLUON_DEFAULT_PACKAGES := gluon-core kmod-ipv6 firewall ip6tables -uboot-envtools
+GLUON_DEFAULT_PACKAGES := gluon-core kmod-ipv6 firewall ip6tables -uboot-envtools -wpad-mini hostapd-mini
 
 override DEFAULT_PACKAGES.router :=
 

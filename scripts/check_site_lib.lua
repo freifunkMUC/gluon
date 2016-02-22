@@ -12,6 +12,12 @@ local function assert_type(var, t, msg)
 end
 
 
+function assert_uci_name(var)
+   -- We don't use character classes like %w here to be independent of the locale
+   assert(var:match('^[0-9a-zA-Z_]+$'), "site.conf error: `" .. var .. "' is not a valid config section name (only alphanumeric characters and the underscore are allowed)")
+end
+
+
 function need_string(varname, required)
    local var = loadvar(varname)
 
@@ -84,8 +90,10 @@ function need_table(varname, subcheck, required)
 
    assert_type(var, 'table', "site.conf error: expected `" .. varname .. "' to be a table")
 
-   for k, v in pairs(var) do
-      subcheck(k, v)
+   if subcheck then
+      for k, v in pairs(var) do
+         subcheck(k, v)
+      end
    end
 
    return var

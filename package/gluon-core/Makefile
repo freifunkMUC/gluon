@@ -12,21 +12,7 @@ define Package/gluon-core
   SECTION:=gluon
   CATEGORY:=Gluon
   TITLE:=Base files of Gluon
-  DEPENDS:=+gluon-site +lua-platform-info +luci-lib-nixio +odhcp6c +firewall
-endef
-
-
-define LangConfig
-config GLUON_LANG_$(1)
-	bool "$(GLUON_LANG_$(1)) language support"
-	depends on PACKAGE_gluon-core
-	default n
-
-endef
-
-
-define Package/gluon-core/config
-$(foreach lang,$(GLUON_SUPPORTED_LANGS),$(call LangConfig,$(lang)))
+  DEPENDS:=+gluon-site +libgluonutil +lua-platform-info +luci-base +luci-lib-jsonc +odhcp6c +firewall
 endef
 
 
@@ -46,6 +32,7 @@ endef
 
 define Package/gluon-core/install
 	$(CP) ./files/* $(1)/
+	$(SED) 's/__GLUON_OPENWRT_FEEDS__/{$(GLUON_OPENWRT_FEEDS:%="%",)}/' $(1)/lib/gluon/upgrade/500-opkg
 
 	$(INSTALL_DIR) $(1)/lib/gluon
 	echo "$(GLUON_VERSION)" > $(1)/lib/gluon/gluon-version

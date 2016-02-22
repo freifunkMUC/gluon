@@ -1,13 +1,17 @@
 local wizard_dir = "/lib/gluon/config-mode/wizard/"
 local i18n = luci.i18n
 local uci = luci.model.uci.cursor()
-local fs = require "luci.fs"
+local fs = require "nixio.fs"
+local util = require "nixio.util"
 local f, s
 
 local wizard = {}
-local files = fs.dir(wizard_dir)
+local files = {}
 
-table.sort(files)
+if fs.access(wizard_dir) then
+  files = util.consume(fs.dir(wizard_dir))
+  table.sort(files)
+end
 
 for _, entry in ipairs(files) do
   if entry:sub(1, 1) ~= '.' then

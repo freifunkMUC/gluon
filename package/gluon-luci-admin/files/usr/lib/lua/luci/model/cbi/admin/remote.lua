@@ -44,7 +44,7 @@ if fs.access("/etc/config/dropbear") then
 
   function keys.write(self, section, value)
     if value then
-      fs.writefile("/etc/dropbear/authorized_keys", value:gsub("\r\n", "\n"))
+      fs.writefile("/etc/dropbear/authorized_keys", value:gsub("\r\n", "\n"):trim() .. "\n")
     end
   end
 
@@ -84,7 +84,7 @@ function m2.on_commit(map)
   if v1 and v2 then
     if v1 == v2 then
       if #v1 > 0 then
-        if luci.sys.user.setpasswd(luci.dispatcher.context.authuser, v1) == 0 then
+        if luci.sys.user.setpasswd('root', v1) == 0 then
           m2.message = translate("Password changed.")
         else
           m2.errmessage = translate("Unable to change the password.")
