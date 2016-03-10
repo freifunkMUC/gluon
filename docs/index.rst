@@ -60,6 +60,8 @@ Releases
 .. toctree::
    :maxdepth: 1
 
+   releases/v2016.1.2
+   releases/v2016.1.1
    releases/v2016.1
    releases/v2015.1.2
    releases/v2015.1.1
@@ -106,12 +108,17 @@ ar71xx-generic
   - WNDR3800
   - WNDRMAC (v2)
 
+* Onion
+
+  - Omega
+
 * TP-Link
 
   - CPE210 (v1.0, v1.1)
   - CPE220 (v1.0, v1.1)
   - CPE510 (v1.0, v1.1)
   - CPE520 (v1.0, v1.1)
+  - TL-MR13U (v1)
   - TL-MR3020 (v1)
   - TL-MR3040 (v1, v2)
   - TL-MR3220 (v1, v2)

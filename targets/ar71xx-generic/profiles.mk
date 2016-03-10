@@ -117,6 +117,10 @@ $(eval $(call GluonModel,TLWA901,tl-wa901nd-v1,tp-link-tl-wa901n-nd-v1))
 $(eval $(call GluonModel,TLWA901,tl-wa901nd-v2,tp-link-tl-wa901n-nd-v2))
 $(eval $(call GluonModel,TLWA901,tl-wa901nd-v3,tp-link-tl-wa901n-nd-v3))
 
+# TL-MR13U v1
+$(eval $(call GluonProfile,TLMR13U))
+$(eval $(call GluonModel,TLMR13U,tl-mr13u-v1,tp-link-tl-mr13u-v1))
+
 # TL-MR3020 v1
 $(eval $(call GluonProfile,TLMR3020))
 $(eval $(call GluonModel,TLMR3020,tl-mr3020-v1,tp-link-tl-mr3020-v1))
@@ -257,3 +261,9 @@ $(eval $(call GluonModel,MYNETN600,mynet-n600,wd-my-net-n600))
 # WD MyNet N750
 $(eval $(call GluonProfile,MYNETN750))
 $(eval $(call GluonModel,MYNETN750,mynet-n750,wd-my-net-n750))
+
+## Onion
+
+# Omega
+$(eval $(call GluonProfile,OMEGA))
+$(eval $(call GluonModel,OMEGA,onion-omega,onion-omega))
