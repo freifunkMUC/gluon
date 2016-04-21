@@ -60,6 +60,7 @@ Releases
 .. toctree::
    :maxdepth: 1
 
+   releases/v2016.1.3
    releases/v2016.1.2
    releases/v2016.1.1
    releases/v2016.1
@@ -76,6 +77,12 @@ Supported Devices & Architectures
 
 ar71xx-generic
 ^^^^^^^^^^^^^^
+
+* ALFA Network
+
+  - AP121
+  - AP121U
+  - Hornet-UB
 
 * Allnet
 
@@ -125,6 +132,7 @@ ar71xx-generic
   - TL-MR3420 (v1, v2)
   - TL-WA701N/ND (v1, v2)
   - TL-WA750RE (v1)
+  - TL-WA7510N (v1)
   - TL-WA801N/ND (v1, v2)
   - TL-WA830RE (v1, v2)
   - TL-WA850RE (v1)
