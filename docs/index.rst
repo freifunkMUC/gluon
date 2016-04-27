@@ -60,6 +60,7 @@ Releases
 .. toctree::
    :maxdepth: 1
 
+   releases/v2016.1.4
    releases/v2016.1.3
    releases/v2016.1.2
    releases/v2016.1.1
@@ -78,6 +79,10 @@ Supported Devices & Architectures
 ar71xx-generic
 ^^^^^^^^^^^^^^
 
+* 8devices
+
+  - Carambola 2
+
 * ALFA Network
 
   - AP121
@@ -93,6 +98,11 @@ ar71xx-generic
   - WZR-HP-AG300H / WZR-600DHP
   - WZR-HP-G300NH
   - WZR-HP-G450H
+
+* Cisco Meraki
+
+  - MR12 / MR62
+  - MR16 / MR66
 
 * D-Link
 
