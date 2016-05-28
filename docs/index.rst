@@ -60,6 +60,7 @@ Releases
 .. toctree::
    :maxdepth: 1
 
+   releases/v2016.1.5
    releases/v2016.1.4
    releases/v2016.1.3
    releases/v2016.1.2
@@ -129,6 +130,16 @@ ar71xx-generic
 
   - Omega
 
+* OpenMesh
+
+ - MR600 (v1, v2)
+ - MR900 (v1, v2)
+ - OM2P (v1, v2)
+ - OM2P-HS (v1, v2)
+ - OM2P-LC
+ - OM5P
+ - OM5P-AN
+
 * TP-Link
 
   - CPE210 (v1.0, v1.1)
@@ -157,7 +168,7 @@ ar71xx-generic
   - TL-WR741N/ND (v1, v2, v4, v5)
   - TL-WR743N/ND (v1, v2)
   - TL-WR801N/ND (v1, v2)
-  - TL-WR841N/ND (v3, v5, v7, v8, v9, v10)
+  - TL-WR841N/ND (v3, v5, v7, v8, v9, v10, v11)
   - TL-WR842N/ND (v1, v2)
   - TL-WR843N/ND (v1)
   - TL-WR940N (v1, v2, v3)
@@ -170,11 +181,13 @@ ar71xx-generic
   - Air Gateway
   - Air Router
   - Bullet M
+  - Loco M
+  - Loco M XW
   - Nanostation M
   - Nanostation M XW
-  - Loco M XW
   - Picostation M
   - Rocket M
+  - Rocket M XW
   - UniFi AP
   - UniFi AP Pro
   - UniFi AP Outdoor

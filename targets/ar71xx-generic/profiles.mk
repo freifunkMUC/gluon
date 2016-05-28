@@ -16,7 +16,7 @@ $(eval $(call GluonModelAlias,CPE510,tp-link-cpe510-v1.0,tp-link-cpe520-v1.1))
 
 # TL-WA701N/ND v1, v2
 $(eval $(call GluonProfile,TLWA701))
-$(eval $(call GluonModel,TLWA701,tl-wa701nd-v1,tp-link-tl-wa701n-nd-v1))
+$(eval $(call GluonModel,TLWA701,tl-wa701n-v1,tp-link-tl-wa701n-nd-v1))
 $(eval $(call GluonModel,TLWA701,tl-wa701nd-v2,tp-link-tl-wa701n-nd-v2))
 
 # TL-WA7510 v1
@@ -56,14 +56,15 @@ $(eval $(call GluonProfile,TLWA801))
 $(eval $(call GluonModel,TLWA801,tl-wa801nd-v1,tp-link-tl-wa801n-nd-v1))
 $(eval $(call GluonModel,TLWA801,tl-wa801nd-v2,tp-link-tl-wa801n-nd-v2))
 
-# TL-WR841N/ND v3, v5, v7, v8, v9, v10
+# TL-WR841N/ND v3, v5, v7, v8, v9, v10, v11
 $(eval $(call GluonProfile,TLWR841))
-$(eval $(call GluonModel,TLWR841,tl-wr841-v3,tp-link-tl-wr841n-nd-v3))
-$(eval $(call GluonModel,TLWR841,tl-wr841-v5,tp-link-tl-wr841n-nd-v5))
-$(eval $(call GluonModel,TLWR841,tl-wr841-v7,tp-link-tl-wr841n-nd-v7))
-$(eval $(call GluonModel,TLWR841,tl-wr841-v8,tp-link-tl-wr841n-nd-v8))
-$(eval $(call GluonModel,TLWR841,tl-wr841-v9,tp-link-tl-wr841n-nd-v9))
-$(eval $(call GluonModel,TLWR841,tl-wr841-v10,tp-link-tl-wr841n-nd-v10))
+$(eval $(call GluonModel,TLWR841,tl-wr841nd-v3,tp-link-tl-wr841n-nd-v3))
+$(eval $(call GluonModel,TLWR841,tl-wr841nd-v5,tp-link-tl-wr841n-nd-v5))
+$(eval $(call GluonModel,TLWR841,tl-wr841nd-v7,tp-link-tl-wr841n-nd-v7))
+$(eval $(call GluonModel,TLWR841,tl-wr841n-v8,tp-link-tl-wr841n-nd-v8))
+$(eval $(call GluonModel,TLWR841,tl-wr841n-v9,tp-link-tl-wr841n-nd-v9))
+$(eval $(call GluonModel,TLWR841,tl-wr841n-v10,tp-link-tl-wr841n-nd-v10))
+$(eval $(call GluonModel,TLWR841,tl-wr841n-v11,tp-link-tl-wr841n-nd-v11))
 
 # TL-WR842N/ND v1, v2
 $(eval $(call GluonProfile,TLWR842))
@@ -150,7 +151,7 @@ $(eval $(call GluonModel,TLWR2543,tl-wr2543-v1,tp-link-tl-wr2543n-nd-v1))
 
 ifeq ($(BROKEN),1)
 # Archer C5 v1, C7 v2
-$(eval $(call GluonProfile,ARCHERC7,kmod-ath10k))
+$(eval $(call GluonProfile,ARCHERC7,kmod-ath10k ath10k-firmware-qca988x-ct))
 $(eval $(call GluonModel,ARCHERC7,archer-c5,tp-link-archer-c5-v1)) # BROKEN: ath10k
 $(eval $(call GluonModel,ARCHERC7,archer-c7-v2,tp-link-archer-c7-v2)) # BROKEN: ath10k
 endif
@@ -168,6 +169,7 @@ $(eval $(call GluonModelAlias,UBNT,ubiquiti-bullet-m,ubiquiti-rocket-m))
 $(eval $(call GluonModel,UBNT,ubnt-loco-m-xw,ubiquiti-loco-m-xw))
 $(eval $(call GluonModel,UBNT,ubnt-nano-m,ubiquiti-nanostation-m))
 $(eval $(call GluonModel,UBNT,ubnt-nano-m-xw,ubiquiti-nanostation-m-xw))
+$(eval $(call GluonModel,UBNT,ubnt-rocket-m-xw,ubiquiti-rocket-m-xw))
 $(eval $(call GluonModel,UBNT,ubnt-uap-pro,ubiquiti-unifi-ap-pro))
 $(eval $(call GluonModel,UBNT,ubnt-unifi,ubiquiti-unifi))
 $(eval $(call GluonModel,UBNT,ubnt-unifi-outdoor,ubiquiti-unifiap-outdoor))
@@ -271,6 +273,35 @@ $(eval $(call GluonModel,MYNETN750,mynet-n750,wd-my-net-n750))
 # Omega
 $(eval $(call GluonProfile,OMEGA))
 $(eval $(call GluonModel,OMEGA,onion-omega,onion-omega))
+
+## OpenMesh
+
+# MR600
+$(eval $(call GluonProfile,MR600,om-watchdog uboot-envtools))
+$(eval $(call GluonProfileSysupgradeSuffix,MR600,-squashfs-factory,.bin))
+$(eval $(call GluonModel,MR600,mr600,openmesh-mr600))
+$(eval $(call GluonModelAlias,MR600,openmesh-mr600,openmesh-mr600v2))
+
+# MR900
+$(eval $(call GluonProfile,MR900,om-watchdog uboot-envtools))
+$(eval $(call GluonProfileSysupgradeSuffix,MR900,-squashfs-factory,.bin))
+$(eval $(call GluonModel,MR900,mr900,openmesh-mr900))
+$(eval $(call GluonModelAlias,MR900,openmesh-mr900,openmesh-mr900v2))
+
+# OM2P
+$(eval $(call GluonProfile,OM2P,om-watchdog uboot-envtools))
+$(eval $(call GluonProfileSysupgradeSuffix,OM2P,-squashfs-factory,.bin))
+$(eval $(call GluonModel,OM2P,om2p,openmesh-om2p))
+$(eval $(call GluonModelAlias,OM2P,openmesh-om2p,openmesh-om2pv2))
+$(eval $(call GluonModelAlias,OM2P,openmesh-om2p,openmesh-om2p-hs))
+$(eval $(call GluonModelAlias,OM2P,openmesh-om2p,openmesh-om2p-hsv2))
+$(eval $(call GluonModelAlias,OM2P,openmesh-om2p,openmesh-om2p-lc))
+
+# OM5P
+$(eval $(call GluonProfile,OM5P,om-watchdog uboot-envtools))
+$(eval $(call GluonProfileSysupgradeSuffix,OM5P,-squashfs-factory,.bin))
+$(eval $(call GluonModel,OM5P,om5p,openmesh-om5p))
+$(eval $(call GluonModelAlias,OM5P,openmesh-om5p,openmesh-om5p-an))
 
 ## ALFA
 
