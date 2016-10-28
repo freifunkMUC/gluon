@@ -310,9 +310,15 @@ $(eval $(call GluonProfile,GLINET))
 $(eval $(call GluonModel,GLINET,gl-inet-6408A-v1,gl-inet-6408a-v1))
 $(eval $(call GluonModel,GLINET,gl-inet-6416A-v1,gl-inet-6416a-v1))
 
+# GL-AR150
 $(eval $(call GluonProfile,GL-AR150))
 $(eval $(call GluonModel,GL-AR150,gl-ar150,gl-ar150))
 $(eval $(call GluonProfileFactorySuffix,GL-AR150))
+
+# GL-AR300M
+$(eval $(call GluonProfile,GL-AR300M))
+$(eval $(call GluonModel,GL-AR300M,gl-ar300m,gl-ar300m))
+$(eval $(call GluonProfileFactorySuffix,GL-AR300M))
 
 ## Western Digital
 
