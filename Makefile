@@ -4,6 +4,7 @@ LC_ALL:=C
 LANG:=C
 export LC_ALL LANG
 
+<<<<<<< HEAD
 export SHELL:=/usr/bin/env bash
 
 GLUONPATH ?= $(PATH)
@@ -14,9 +15,18 @@ space:= $(empty) $(empty)
 
 GLUONMAKE_EARLY = PATH=$(GLUONPATH) $(SUBMAKE) -C $(GLUON_ORIGOPENWRTDIR) -f $(GLUONDIR)/Makefile GLUON_TOOLS=0 QUILT=
 GLUONMAKE = PATH=$(GLUONPATH) $(SUBMAKE) -C $(GLUON_OPENWRTDIR) -f $(GLUONDIR)/Makefile
+=======
 
-ifneq ($(OPENWRT_BUILD),1)
+# initialize (possibly already user set) directory variables
+GLUON_SITEDIR ?= site
+GLUON_TMPDIR ?= tmp
+GLUON_OUTPUTDIR ?= output
+>>>>>>> 6a3d5554c170da07c3c5be3741ab9921e5839159
 
+GLUON_IMAGEDIR ?= $(GLUON_OUTPUTDIR)/images
+GLUON_PACKAGEDIR ?= $(GLUON_OUTPUTDIR)/packages
+
+<<<<<<< HEAD
 GLUONDIR:=${CURDIR}
 
 include $(GLUONDIR)/include/gluon.mk
@@ -42,138 +52,114 @@ override OPENWRT_BUILD=1
 override GLUON_TOOLS=1
 GREP_OPTIONS=
 export OPENWRT_BUILD GLUON_TOOLS GREP_OPTIONS
+=======
+# check for spaces & resolve possibly relative paths
+define mkabspath
+ ifneq (1,$(words [$($(1))]))
+  $$(error $(1) must not contain spaces)
+ endif
+ override $(1) := $(abspath $($(1)))
+endef
+>>>>>>> 6a3d5554c170da07c3c5be3741ab9921e5839159
 
--include $(TOPDIR)/include/debug.mk
--include $(TOPDIR)/include/depends.mk
-include $(GLUONDIR)/include/toplevel.mk
+$(eval $(call mkabspath,GLUON_SITEDIR))
+$(eval $(call mkabspath,GLUON_TMPDIR))
+$(eval $(call mkabspath,GLUON_OUTPUTDIR))
+$(eval $(call mkabspath,GLUON_IMAGEDIR))
+$(eval $(call mkabspath,GLUON_PACKAGEDIR))
 
-
-include $(GLUONDIR)/targets/targets.mk
-
-
-CheckTarget := [ -n '$(GLUON_TARGET)' -a -n '$(GLUON_TARGET_$(GLUON_TARGET)_BOARD)' ] \
-	|| (echo -e 'Please set GLUON_TARGET to a valid target. Gluon supports the following targets:$(subst $(space),\n * ,$(GLUON_TARGETS))'; false)
-
-
-CheckExternal := test -d $(GLUON_ORIGOPENWRTDIR) || (echo 'You don'"'"'t seem to have obtained the external repositories needed by Gluon; please call `make update` first!'; false)
-
-
-create-key: FORCE
-	@$(CheckExternal)
-	+@$(GLUONMAKE_EARLY) create-key
-
-prepare-target: FORCE
-	@$(CheckExternal)
-	@$(CheckTarget)
-	+@$(GLUONMAKE_EARLY) prepare-target
-
-all: prepare-target
-	+@$(GLUONMAKE) build-key
-	+@$(GLUONMAKE) prepare
-	+@$(GLUONMAKE) images
-	+@$(GLUONMAKE) modules
-
-prepare: prepare-target
-	+@$(GLUONMAKE) build-key
-	+@$(GLUONMAKE) $@
-
-clean download images modules: FORCE
-	@$(CheckExternal)
-	@$(CheckTarget)
-	+@$(GLUONMAKE_EARLY) maybe-prepare-target
-	+@$(GLUONMAKE) build-key
-	+@$(GLUONMAKE) $@
-
-toolchain/% package/% target/% image/%: FORCE
-	@$(CheckExternal)
-	@$(CheckTarget)
-	+@$(GLUONMAKE_EARLY) maybe-prepare-target
-	+@$(GLUONMAKE) build-key
-	+@$(GLUONMAKE) $@
-
-manifest: FORCE
-	@[ -n '$(GLUON_BRANCH)' ] || (echo 'Please set GLUON_BRANCH to create a manifest.'; false)
-	@echo '$(GLUON_PRIORITY)' | grep -qE '^([0-9]*\.)?[0-9]+$$' || (echo 'Please specify a numeric value for GLUON_PRIORITY to create a manifest.'; false)
-	@$(CheckExternal)
-
-	( \
-		echo 'BRANCH=$(GLUON_BRANCH)' && \
-		echo 'DATE=$(shell $(GLUON_ORIGOPENWRTDIR)/staging_dir/host/bin/lua $(GLUONDIR)/scripts/rfc3339date.lua)' && \
-		echo 'PRIORITY=$(GLUON_PRIORITY)' && \
-		echo \
-	) > $(GLUON_BUILDDIR)/$(GLUON_BRANCH).manifest.tmp
-
-	+($(foreach GLUON_TARGET,$(GLUON_TARGETS), \
-		( [ ! -e $(BOARD_BUILDDIR)/prepared ] || ( $(GLUONMAKE) manifest GLUON_TARGET='$(GLUON_TARGET)' V=s$(OPENWRT_VERBOSE) ) ) && \
-	) :)
-
-	mkdir -p $(GLUON_IMAGEDIR)/sysupgrade
-	mv $(GLUON_BUILDDIR)/$(GLUON_BRANCH).manifest.tmp $(GLUON_IMAGEDIR)/sysupgrade/$(GLUON_BRANCH).manifest
-
-dirclean : FORCE
-	for dir in build_dir dl staging_dir tmp; do \
-		rm -rf $(GLUON_ORIGOPENWRTDIR)/$$dir; \
-	done
-	rm -rf $(GLUON_BUILDDIR) $(GLUON_OUTPUTDIR)
-
-else
-
-TOPDIR=${CURDIR}
-export TOPDIR
-
-include rules.mk
-
-include $(GLUONDIR)/include/gluon.mk
-
-include $(INCLUDE_DIR)/host.mk
-include $(INCLUDE_DIR)/depends.mk
-include $(INCLUDE_DIR)/subdir.mk
-
-include package/Makefile
-include tools/Makefile
-include toolchain/Makefile
-include target/Makefile
+export GLUON_TMPDIR GLUON_IMAGEDIR GLUON_PACKAGEDIR DEVICES
 
 
-PROFILES :=
-PROFILE_PACKAGES :=
+$(GLUON_SITEDIR)/site.mk:
+	$(error No site configuration was found. Please check out a site configuration to $(GLUON_SITEDIR))
 
-define Profile
-  $(eval $(call Profile/Default))
-  $(eval $(call Profile/$(1)))
+include $(GLUON_SITEDIR)/site.mk
+
+GLUON_RELEASE ?= $(error GLUON_RELEASE not set. GLUON_RELEASE can be set in site.mk or on the command line)
+
+GLUON_MULTIDOMAIN ?= 0
+GLUON_WLAN_MESH ?= 11s
+GLUON_DEBUG ?= 0
+
+export GLUON_RELEASE GLUON_REGION GLUON_MULTIDOMAIN GLUON_WLAN_MESH GLUON_DEBUG
+
+show-release:
+	@echo '$(GLUON_RELEASE)'
+
+
+update: FORCE
+	@GLUON_SITEDIR='$(GLUON_SITEDIR)' scripts/update.sh
+	@GLUON_SITEDIR='$(GLUON_SITEDIR)' scripts/patch.sh
+	@GLUON_SITEDIR='$(GLUON_SITEDIR)' scripts/feeds.sh
+
+update-patches: FORCE
+	@GLUON_SITEDIR='$(GLUON_SITEDIR)' scripts/update.sh
+	@GLUON_SITEDIR='$(GLUON_SITEDIR)' scripts/update-patches.sh
+	@GLUON_SITEDIR='$(GLUON_SITEDIR)' scripts/patch.sh
+
+update-feeds: FORCE
+	@GLUON_SITEDIR='$(GLUON_SITEDIR)' scripts/feeds.sh
+
+
+GLUON_TARGETS :=
+
+define GluonTarget
+gluon_target := $(1)$$(if $(2),-$(2))
+GLUON_TARGETS += $$(gluon_target)
+GLUON_TARGET_$$(gluon_target)_BOARD := $(1)
+GLUON_TARGET_$$(gluon_target)_SUBTARGET := $(if $(3),$(3),$(2))
 endef
 
-define GluonProfile
-PROFILES += $(1)
-PROFILE_PACKAGES += $(filter-out -%,$(2) $(GLUON_$(1)_SITE_PACKAGES))
-GLUON_$(1)_PROFILE := $(if $(3),$(3),$(1))
-GLUON_$(1)_DEFAULT_PACKAGES := $(2)
-GLUON_$(1)_FACTORY_SUFFIX := -squashfs-factory
-GLUON_$(1)_SYSUPGRADE_SUFFIX := -squashfs-sysupgrade
-GLUON_$(1)_FACTORY_EXT := .bin
-GLUON_$(1)_SYSUPGRADE_EXT := .bin
-GLUON_$(1)_MODELS :=
+include targets/targets.mk
+
+
+LEDEMAKE = $(MAKE) -C lede
+
+BOARD := $(GLUON_TARGET_$(GLUON_TARGET)_BOARD)
+SUBTARGET := $(GLUON_TARGET_$(GLUON_TARGET)_SUBTARGET)
+
+GLUON_CONFIG_VARS := \
+	GLUON_SITEDIR='$(GLUON_SITEDIR)' \
+	GLUON_RELEASE='$(GLUON_RELEASE)' \
+	GLUON_BRANCH='$(GLUON_BRANCH)' \
+	GLUON_LANGS='$(GLUON_LANGS)' \
+	BOARD='$(BOARD)' \
+	SUBTARGET='$(SUBTARGET)'
+
+LEDE_TARGET := $(BOARD)$(if $(SUBTARGET),-$(SUBTARGET))
+
+export LEDE_TARGET
+
+
+CheckTarget := [ '$(LEDE_TARGET)' ] \
+	|| (echo 'Please set GLUON_TARGET to a valid target. Gluon supports the following targets:'; $(foreach target,$(GLUON_TARGETS),echo ' * $(target)';) false)
+
+CheckExternal := test -d lede || (echo 'You don'"'"'t seem to have obtained the external repositories needed by Gluon; please call `make update` first!'; false)
+
+define CheckSite
+	@GLUON_SITEDIR='$(GLUON_SITEDIR)' GLUON_SITE_CONFIG='$(1).conf' $(LUA) scripts/site_config.lua \
+		|| (echo 'Your site configuration ($(1).conf) did not pass validation.'; false)
+
 endef
 
-define GluonProfileFactorySuffix
-GLUON_$(1)_FACTORY_SUFFIX := $(2)
-GLUON_$(1)_FACTORY_EXT := $(3)
-endef
+list-targets: FORCE
+	@$(foreach target,$(GLUON_TARGETS),echo '$(target)';)
 
-define GluonProfileSysupgradeSuffix
-GLUON_$(1)_SYSUPGRADE_SUFFIX := $(2)
-GLUON_$(1)_SYSUPGRADE_EXT := $(3)
-endef
 
-define GluonModel
-GLUON_$(1)_MODELS += $(3)
-GLUON_$(1)_MODEL_$(3) := $(2)
-GLUON_$(1)_MODEL_$(3)_ALIASES :=
-endef
+GLUON_FEATURE_PACKAGES := $(shell scripts/features.sh '$(GLUON_FEATURES)' || echo '__ERROR__')
+ifneq ($(filter __ERROR__,$(GLUON_FEATURE_PACKAGES)),)
+$(error Error while evaluating GLUON_FEATURES)
+endif
 
-define GluonModelAlias
-GLUON_$(1)_MODEL_$(2)_ALIASES += $(3)
+
+GLUON_PACKAGES :=
+define merge_packages
+  $(foreach pkg,$(1),
+    GLUON_PACKAGES := $$(strip $$(filter-out -$$(patsubst -%,%,$(pkg)) $$(patsubst -%,%,$(pkg)),$$(GLUON_PACKAGES)) $(pkg))
+  )
 endef
+<<<<<<< HEAD
 
 
 export SHA512SUM := $(GLUONDIR)/scripts/sha512sum.sh
@@ -348,145 +334,68 @@ prepare: FORCE
 	+$(GLUONMAKE) kernel
 	+$(GLUONMAKE) packages
 	+$(GLUONMAKE) prepare-image
+=======
+$(eval $(call merge_packages,$(GLUON_FEATURE_PACKAGES) $(GLUON_SITE_PACKAGES)))
 
-	echo "$(GLUON_RELEASE)" > $(gluon_prepared_stamp)
+config: FORCE
+	@$(CheckExternal)
+	@$(CheckTarget)
+>>>>>>> 6a3d5554c170da07c3c5be3741ab9921e5839159
 
-$(gluon_prepared_stamp):
-	+$(GLUONMAKE) prepare
+	@$(GLUON_CONFIG_VARS) \
+		scripts/target_config.sh '$(GLUON_TARGET)' '$(GLUON_PACKAGES)' \
+		> lede/.config
+	+@$(LEDEMAKE) defconfig
 
-modules: FORCE $(gluon_prepared_stamp)
-	-rm -f $(GLUON_MODULEDIR)/*/$(BOARD)/$(if $(SUBTARGET),$(SUBTARGET),generic)/*
-	-rmdir -p $(GLUON_MODULEDIR)/*/$(BOARD)/$(if $(SUBTARGET),$(SUBTARGET),generic)
-	mkdir -p $(GLUON_MODULEDIR)/$(MODULE_PREFIX)/$(BOARD)/$(if $(SUBTARGET),$(SUBTARGET),generic)
-	cp $(PACKAGE_DIR)/kmod-*.ipk $(GLUON_MODULEDIR)/$(MODULE_PREFIX)/$(BOARD)/$(if $(SUBTARGET),$(SUBTARGET),generic)
-
-	$(_SINGLE)$(SUBMAKE) -r package/index PACKAGE_DIR=$(GLUON_MODULEDIR)/$(MODULE_PREFIX)/$(BOARD)/$(if $(SUBTARGET),$(SUBTARGET),generic)
-
-
-include $(INCLUDE_DIR)/package-ipkg.mk
-
-# override variables from rules.mk
-PACKAGE_DIR = $(GLUON_OPENWRTDIR)/bin/$(BOARD)/packages
-
-PROFILE_BUILDDIR = $(BOARD_BUILDDIR)/profiles/$(PROFILE)
-PROFILE_KDIR = $(PROFILE_BUILDDIR)/kernel
-BIN_DIR = $(PROFILE_BUILDDIR)/images
-
-TARGET_DIR = $(PROFILE_BUILDDIR)/root
-
-OPKG:= \
-  IPKG_TMP="$(TMP_DIR)/ipkgtmp" \
-  IPKG_INSTROOT="$(TARGET_DIR)" \
-  IPKG_CONF_DIR="$(TMP_DIR)" \
-  IPKG_OFFLINE_ROOT="$(TARGET_DIR)" \
-  $(STAGING_DIR_HOST)/bin/opkg \
-	-f $(BOARD_BUILDDIR)/opkg.conf \
-	--cache $(TMP_DIR)/dl \
-	--offline-root $(TARGET_DIR) \
-	--force-postinstall \
-	--add-dest root:/ \
-	--add-arch all:100 \
-	--add-arch $(ARCH_PACKAGES):200
-
-EnableInitscript = ! grep -q '\#!/bin/sh /etc/rc.common' $(1) || bash ./etc/rc.common $(1) enable
+	@$(GLUON_CONFIG_VARS) \
+		scripts/target_config_check.sh '$(GLUON_TARGET)' '$(GLUON_PACKAGES)'
 
 
-enable_initscripts: FORCE
-	cd $(TARGET_DIR) && ( export IPKG_INSTROOT=$(TARGET_DIR); \
-		$(foreach script,$(wildcard $(TARGET_DIR)/etc/init.d/*), \
-			$(call EnableInitscript,$(script)); \
+LUA := lede/staging_dir/hostpkg/bin/lua
+
+$(LUA):
+	@$(CheckExternal)
+
+	+@[ -e lede/.config ] || $(LEDEMAKE) defconfig
+	+@$(LEDEMAKE) tools/install
+	+@$(LEDEMAKE) package/lua/host/install
+
+prepare-target: config $(LUA) ;
+
+all: prepare-target
+	$(foreach conf,site $(patsubst $(GLUON_SITEDIR)/%.conf,%,$(wildcard $(GLUON_SITEDIR)/domains/*.conf)),$(call CheckSite,$(conf)))
+
+	@scripts/clean_output.sh
+	+@$(LEDEMAKE)
+	@GLUON_SITEDIR='$(GLUON_SITEDIR)' scripts/copy_output.sh '$(GLUON_TARGET)'
+
+clean download: config
+	+@$(LEDEMAKE) $@
+
+dirclean: FORCE
+	+@[ -e lede/.config ] || $(LEDEMAKE) defconfig
+	+@$(LEDEMAKE) dirclean
+	@rm -rf $(GLUON_TMPDIR) $(GLUON_OUTPUTDIR)
+
+manifest: $(LUA) FORCE
+	@[ '$(GLUON_BRANCH)' ] || (echo 'Please set GLUON_BRANCH to create a manifest.'; false)
+	@echo '$(GLUON_PRIORITY)' | grep -qE '^([0-9]*\.)?[0-9]+$$' || (echo 'Please specify a numeric value for GLUON_PRIORITY to create a manifest.'; false)
+	@$(CheckExternal)
+
+	@( \
+		echo 'BRANCH=$(GLUON_BRANCH)' && \
+		echo "DATE=$$($(LUA) scripts/rfc3339date.lua)" && \
+		echo 'PRIORITY=$(GLUON_PRIORITY)' && \
+		echo && \
+		$(foreach GLUON_TARGET,$(GLUON_TARGETS), \
+			GLUON_SITEDIR='$(GLUON_SITEDIR)' scripts/generate_manifest.sh '$(GLUON_TARGET)' && \
 		) : \
-	)
+	) > 'tmp/$(GLUON_BRANCH).manifest.tmp'
 
+	@mkdir -p '$(GLUON_IMAGEDIR)/sysupgrade'
+	@mv 'tmp/$(GLUON_BRANCH).manifest.tmp' '$(GLUON_IMAGEDIR)/sysupgrade/$(GLUON_BRANCH).manifest'
 
-# Generate package list
-$(eval $(call merge-lists,INSTALL_PACKAGES,DEFAULT_PACKAGES GLUON_DEFAULT_PACKAGES GLUON_SITE_PACKAGES GLUON_$(PROFILE)_DEFAULT_PACKAGES GLUON_$(PROFILE)_SITE_PACKAGES))
+FORCE: ;
 
-package_install: FORCE
-	$(OPKG) update
-	$(OPKG) install $(PACKAGE_DIR)/base-files_*.ipk $(PACKAGE_DIR)/libc_*.ipk
-	$(OPKG) install $(PACKAGE_DIR)/kernel_*.ipk
-
-	$(OPKG) install $(INSTALL_PACKAGES)
-	+$(GLUONMAKE) enable_initscripts
-
-	rm -f $(TARGET_DIR)/usr/lib/opkg/lists/* $(TARGET_DIR)/tmp/opkg.lock
-
-# Remove opkg database when opkg is not intalled
-	if [ ! -x $(TARGET_DIR)/bin/opkg ]; then rm -rf $(TARGET_DIR)/usr/lib/opkg; fi
-
-
-include $(INCLUDE_DIR)/version.mk
-
-opkg_config: FORCE
-	for d in base packages luci routing telephony management; do \
-		echo "src/gz %n_$$d %U/$$d"; \
-	done > $(TARGET_DIR)/etc/opkg/distfeeds.conf
-	$(VERSION_SED) $(TARGET_DIR)/etc/opkg/distfeeds.conf
-
-
-image: FORCE
-	rm -rf $(TARGET_DIR) $(BIN_DIR) $(PROFILE_KDIR)
-	mkdir -p $(TARGET_DIR) $(BIN_DIR) $(TARGET_DIR)/tmp $(GLUON_IMAGEDIR)/factory $(GLUON_IMAGEDIR)/sysupgrade
-	cp -r $(BOARD_KDIR) $(PROFILE_KDIR)
-
-	+$(GLUONMAKE) package_install
-	+$(GLUONMAKE) opkg_config
-
-	$(call Image/mkfs/prepare)
-	$(_SINGLE)$(NO_TRACE_MAKE) -C $(TOPDIR)/target/linux/$(BOARD)/image install TARGET_BUILD=1 IMG_PREFIX=gluon \
-		PROFILE="$(GLUON_$(PROFILE)_PROFILE)" KDIR="$(PROFILE_KDIR)" TARGET_DIR="$(TARGET_DIR)" BIN_DIR="$(BIN_DIR)" TMP_DIR="$(TMP_DIR)"
-
-	$(foreach model,$(GLUON_$(PROFILE)_MODELS), \
-		$(if $(GLUON_$(PROFILE)_SYSUPGRADE_EXT), \
-			rm -f $(GLUON_IMAGEDIR)/sysupgrade/gluon-*-$(model)-sysupgrade$(GLUON_$(PROFILE)_SYSUPGRADE_EXT) && \
-			cp $(BIN_DIR)/gluon-$(GLUON_$(PROFILE)_MODEL_$(model))$(GLUON_$(PROFILE)_SYSUPGRADE_SUFFIX)$(GLUON_$(PROFILE)_SYSUPGRADE_EXT) $(GLUON_IMAGEDIR)/sysupgrade/$(IMAGE_PREFIX)-$(model)-sysupgrade$(GLUON_$(PROFILE)_SYSUPGRADE_EXT) && \
-		) \
-		$(if $(GLUON_$(PROFILE)_FACTORY_EXT), \
-			rm -f $(GLUON_IMAGEDIR)/factory/gluon-*-$(model)$(GLUON_$(PROFILE)_FACTORY_EXT) && \
-			cp $(BIN_DIR)/gluon-$(GLUON_$(PROFILE)_MODEL_$(model))$(GLUON_$(PROFILE)_FACTORY_SUFFIX)$(GLUON_$(PROFILE)_FACTORY_EXT) $(GLUON_IMAGEDIR)/factory/$(IMAGE_PREFIX)-$(model)$(GLUON_$(PROFILE)_FACTORY_EXT) && \
-		) \
-		\
-		$(foreach alias,$(GLUON_$(PROFILE)_MODEL_$(model)_ALIASES), \
-			$(if $(GLUON_$(PROFILE)_SYSUPGRADE_EXT), \
-				rm -f $(GLUON_IMAGEDIR)/sysupgrade/gluon-*-$(alias)-sysupgrade$(GLUON_$(PROFILE)_SYSUPGRADE_EXT) && \
-				ln -s $(IMAGE_PREFIX)-$(model)-sysupgrade$(GLUON_$(PROFILE)_SYSUPGRADE_EXT) $(GLUON_IMAGEDIR)/sysupgrade/$(IMAGE_PREFIX)-$(alias)-sysupgrade$(GLUON_$(PROFILE)_SYSUPGRADE_EXT) && \
-			) \
-			$(if $(GLUON_$(PROFILE)_FACTORY_EXT), \
-				rm -f $(GLUON_IMAGEDIR)/factory/gluon-*-$(alias)$(GLUON_$(PROFILE)_FACTORY_EXT) && \
-				ln -s $(IMAGE_PREFIX)-$(model)$(GLUON_$(PROFILE)_FACTORY_EXT) $(GLUON_IMAGEDIR)/factory/$(IMAGE_PREFIX)-$(alias)$(GLUON_$(PROFILE)_FACTORY_EXT) && \
-			) \
-		) \
-	) :
-
-
-image/%: $(gluon_prepared_stamp)
-	+$(GLUONMAKE) image PROFILE="$(patsubst image/%,%,$@)" V=s$(OPENWRT_VERBOSE)
-
-call_image/%: FORCE
-	+$(GLUONMAKE) $(patsubst call_image/%,image/%,$@)
-
-images: $(patsubst %,call_image/%,$(PROFILES)) ;
-
-manifest: FORCE
-	( \
-		cd $(GLUON_IMAGEDIR)/sysupgrade; \
-		$(foreach profile,$(PROFILES), \
-			$(if $(GLUON_$(profile)_SYSUPGRADE_EXT), \
-				$(foreach model,$(GLUON_$(profile)_MODELS), \
-					file="$(IMAGE_PREFIX)-$(model)-sysupgrade$(GLUON_$(profile)_SYSUPGRADE_EXT)"; \
-					[ -e "$$file" ] && echo '$(model)' "$(PREPARED_RELEASE)" "$$($(SHA512SUM) "$$file")" "$$file"; \
-					\
-					$(foreach alias,$(GLUON_$(profile)_MODEL_$(model)_ALIASES), \
-						file="$(IMAGE_PREFIX)-$(alias)-sysupgrade$(GLUON_$(profile)_SYSUPGRADE_EXT)"; \
-						[ -e "$$file" ] && echo '$(alias)' "$(PREPARED_RELEASE)" "$$($(SHA512SUM) "$$file")" "$$file"; \
-					) \
-				) \
-			) \
-		) : \
-	) >> $(GLUON_BUILDDIR)/$(GLUON_BRANCH).manifest.tmp
-
-.PHONY: all create-key prepare images modules clean gluon-tools manifest
-
-endif
-endif
+.PHONY: FORCE
+.NOTPARALLEL:

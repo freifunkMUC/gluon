@@ -3,12 +3,10 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=gluon-mesh-vpn-fastd
 PKG_VERSION:=3
 
-PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)
-PKG_BUILD_DEPENDS := respondd
-
-include $(GLUONDIR)/include/package.mk
+include ../gluon.mk
 
 define Package/gluon-mesh-vpn-fastd
+<<<<<<< HEAD
   SECTION:=gluon
   CATEGORY:=Gluon
   TITLE:=Support for connecting batman-adv meshes via fastd
@@ -30,6 +28,10 @@ endef
 define Package/gluon-mesh-vpn-fastd/postinst
 #!/bin/sh
 $(call GluonCheckSite,check_site.lua)
+=======
+  TITLE:=Support for connecting meshes via fastd
+  DEPENDS:=+gluon-core +libgluonutil +gluon-mesh-vpn-core +fastd +@GLUON_SPECIALIZE_KERNEL:KERNEL_TUN
+>>>>>>> 6a3d5554c170da07c3c5be3741ab9921e5839159
 endef
 
-$(eval $(call BuildPackage,gluon-mesh-vpn-fastd))
+$(eval $(call BuildPackageGluon,gluon-mesh-vpn-fastd))
