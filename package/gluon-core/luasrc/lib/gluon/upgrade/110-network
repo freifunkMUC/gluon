@@ -47,6 +47,7 @@ uci:section('network', 'interface', 'wan', {
 	multicast_querier = false,
 	peerdns = false,
 	auto = true,
+	ip4table = 1,
 })
 
 uci:section('network', 'rule', 'wan_lookup', {
