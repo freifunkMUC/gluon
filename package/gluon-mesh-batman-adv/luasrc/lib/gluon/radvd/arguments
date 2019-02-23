@@ -2,8 +2,13 @@
 
 local site = require "gluon.site"
 
-io.write("-i local-node -p " .. site.prefix6())
+local f = io.open("/tmp/range6","r")
+if f then
+    local range6 = f:read('*a')
+    f:close()
+    io.write("-i local-node -p " .. range6)
 
-if site.dns.servers() and site.next_node.ip6() then
-	io.write(" --rdnss " .. site.next_node.ip6())
+    if site.dns.servers() and site.next_node.ip6() then
+        io.write(" --rdnss " .. site.next_node.ip6())
+    end
 end
