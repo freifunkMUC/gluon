@@ -89,6 +89,7 @@ struct router {
 	struct timespec eol;
 	struct ether_addr originator;
 	uint16_t tq;
+	bool redirected;
 	bool expired;
 	struct in6_addr lladdr;
 	struct in6_addr prefix;
@@ -161,6 +162,14 @@ static void cleanup(void) {
 		if (fork_execvp_timeout(&timeout, "ebtables-tiny", (const char *[])
 				{ "ebtables-tiny", "-A", G.chain, "-j", "ACCEPT", NULL }))
 			DEBUG_MSG("warning: adding new rule to ebtables chain %s failed", G.chain);
+
+		if (fork_execvp_timeout(&timeout, "ebtables-tiny", (const char *[])
+				{ "ebtables-tiny", "-t", "nat", "-F", "REDIRECT_FILTER", NULL}))
+			DEBUG_MSG("warning: flushing ebtables nat chain REDIRECT_FILTER failed", G.chain);
+
+		if (fork_execvp_timeout(&timeout, "ebtables-tiny", (const char *[])
+				{ "ebtables-tiny", "-t", "nat", "-F", "REDIRECT", NULL}))
+			DEBUG_MSG("warning: flushing ebtables nat chain REDIRECT failed", G.chain);
 	}
 }
 
@@ -650,6 +659,49 @@ static void update_tqs(void) {
 	}
 }
 
+static void update_redirect(void) {
+	struct router *router;
+	struct timespec timeout = {
+		.tv_sec = EBTABLES_TIMEOUT,
+	};
+
+	foreach(router, G.routers) {
+		char mac[F_MAC_LEN + 1];
+		char addr[INET6_ADDRSTRLEN];
+		char prefix[INET6_ADDRSTRLEN];
+
+		if (router->redirected || router->expired)
+		    continue;
+		router->redirected = true;
+
+		snprintf(mac, sizeof(mac), F_MAC, F_MAC_VAR(router->src));
+
+		if (inet_ntop(AF_INET6, &router->prefix, addr, sizeof(addr)) == NULL) {
+			error_message(0, 0, "warning: failed to format prefix");
+			continue;
+		}
+		snprintf(prefix, sizeof(prefix), "%s/64", addr);
+
+		if (fork_execvp_timeout(&timeout, "ebtables-tiny", (const char *[])
+			{ "ebtables-tiny", "-t", "nat", "-A", "REDIRECT_FILTER",
+			"-d", mac,
+			"-j", "REDIRECT",
+			NULL }))
+		error_message(0, 0, "warning: adding new rule to ebtables chain REDIRECT_FILTER failed");
+
+		if (fork_execvp_timeout(&timeout, "ebtables-tiny", (const char *[])
+			{ "ebtables-tiny", "-t", "nat", "-A", "REDIRECT",
+			"-p", "IPv6",
+			"--ip6-source", prefix,
+			"--ip6-destination", "!", prefix,
+			"-d", "!",  mac,
+			"-j", "dnat",
+			"--to-destination", mac,
+			NULL }))
+		error_message(0, 0, "warning: adding new rule to ebtables chain REDIRECT failed");
+	}
+}
+
 static int fork_execvp_timeout(struct timespec *timeout, const char *file, const char *const argv[]) {
 	int ret;
 	pid_t child;
@@ -827,6 +879,8 @@ int main(int argc, char *argv[]) {
 		if (G.routers != NULL &&
 				timespec_diff(&now, &next_update, &diff)) {
 			expire_routers();
+
+			update_redirect();
 
 			// all routers could have expired, check again
 			if (G.routers != NULL) {
