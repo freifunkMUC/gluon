@@ -2,6 +2,8 @@
 /* SPDX-FileCopyrightText: 2017 Sven Eckelmann <sven@narfation.org> */
 /* SPDX-License-Identifier: BSD-2-Clause */
 
+// #define DEBUG
+
 #include <errno.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -29,6 +31,8 @@
 #include <netinet/icmp6.h>
 #include <netinet/in.h>
 #include <netinet/ip6.h>
+
+#include <arpa/inet.h>
 
 #include <netlink/netlink.h>
 #include <netlink/genl/genl.h>
@@ -87,6 +91,9 @@ struct router {
 	struct timespec eol;
 	struct ether_addr originator;
 	uint16_t tq;
+	bool redirected;
+	struct in6_addr lladdr;
+	struct in6_addr prefix;
 };
 
 static struct global {
@@ -156,6 +163,10 @@ static void cleanup(void) {
 		if (fork_execvp_timeout(&timeout, "ebtables-tiny", (const char *[])
 				{ "ebtables-tiny", "-A", G.chain, "-j", "ACCEPT", NULL }))
 			DEBUG_MSG("warning: adding new rule to ebtables chain %s failed", G.chain);
+
+		if (fork_execvp_timeout(&timeout, "ebtables-tiny", (const char *[])
+				{ "ebtables-tiny", "-t", "nat", "-F", "REDIRECT", NULL}))
+			DEBUG_MSG("warning: flushing ebtables nat chain REDIRECT failed", G.chain);
 	}
 }
 
@@ -232,7 +243,7 @@ static int init_packet_socket(unsigned int ifindex) {
 
 	struct sockaddr_ll bind_iface = {
 		.sll_family = AF_PACKET,
-		.sll_protocol = htons(ETH_P_IPV6),
+		.sll_protocol = htons(ETH_P_ALL), /* seems needed to recieve packets on bat0 */
 		.sll_ifindex = ifindex,
 	};
 	ret = bind(sock, (struct sockaddr *)&bind_iface, sizeof(bind_iface));
@@ -317,40 +328,85 @@ static struct router *router_add(const struct ether_addr *mac) {
 	return router;
 }
 
-static void router_update(const struct ether_addr *mac, uint16_t timeout) {
-	struct router *router;
-
-	router = router_find_src(mac);
-	if (!router)
-		router = router_add(mac);
-	if (!router)
-		return;
-
-	clock_gettime(CLOCK_MONOTONIC, &router->eol);
-	router->eol.tv_sec += timeout;
-}
-
 static void handle_ra(int sock) {
 	struct sockaddr_ll src;
 	struct ether_addr mac;
 	socklen_t addr_size = sizeof(src);
 	ssize_t len;
+	uint8_t *ptr;
 	struct {
-		struct ip6_hdr ip6;
-		struct nd_router_advert ra;
+		struct {
+			struct ip6_hdr ip6;
+			struct nd_router_advert ra;
+		} hdr;
+		uint8_t options[128];
 	} pkt;
+	struct router *router;
+	char addr_str[INET6_ADDRSTRLEN];
 
 	len = recvfrom(sock, &pkt, sizeof(pkt), 0, (struct sockaddr *)&src, &addr_size);
 	CHECK(len >= 0);
 
 	// BPF already checked that this is an ICMPv6 RA of a default router
-	CHECK((size_t)len >= sizeof(pkt));
-	CHECK(ntohs(pkt.ip6.ip6_plen) + sizeof(struct ip6_hdr) >= sizeof(pkt));
+	CHECK((size_t)len >= sizeof(pkt.hdr));
+	CHECK(ntohs(pkt.hdr.ip6.ip6_plen) + sizeof(struct ip6_hdr) >= sizeof(pkt.hdr));
 
 	memcpy(&mac, src.sll_addr, sizeof(mac));
 	DEBUG_MSG("received valid RA from " F_MAC, F_MAC_VAR(mac));
 
-	router_update(&mac, ntohs(pkt.ra.nd_ra_router_lifetime));
+	router = router_find_src(&mac);
+	if (!router)
+		router = router_add(&mac);
+	if (!router)
+		return;
+
+	clock_gettime(CLOCK_MONOTONIC, &router->eol);
+	router->eol.tv_sec += ntohs(pkt.hdr.ra.nd_ra_router_lifetime);
+
+	memcpy(&router->lladdr, &pkt.hdr.ip6.ip6_src, sizeof(router->lladdr));
+
+	DEBUG_MSG("%d bytes in packet", len);
+
+	// find prefix option
+	len -= sizeof(pkt.hdr);
+	ptr = (uint8_t*)&pkt + sizeof(pkt.hdr);
+	
+	while (len >= 8) {
+		unsigned int o_type = ptr[0];
+		unsigned int o_len = (unsigned int)ptr[1] << 3;
+		struct nd_opt_prefix_info *o_pi;
+
+		if (o_type != 3) {
+			ptr += o_len;
+			len -= o_len;
+			DEBUG_MSG("skipping option %d (size %d)", o_type, o_len);
+			continue;
+		}
+		CHECK(len >= o_len);
+		DEBUG_MSG("found option option %d (size %d)", o_type, o_len);
+
+		o_pi = (struct nd_opt_prefix_info*)ptr;
+		memcpy(&router->prefix, &o_pi->nd_opt_pi_prefix, sizeof(router->prefix));
+
+
+		ptr += o_len;
+		len -= o_len;
+		break;
+	}
+
+	DEBUG_MSG("%d bytes remaining", len);
+
+	if (inet_ntop(AF_INET6, &router->lladdr, addr_str, sizeof(addr_str))) {
+		DEBUG_MSG("lladdr: %s", addr_str);
+	} else {
+		DEBUG_MSG("lladdr: error");
+	}
+
+	if (inet_ntop(AF_INET6, &router->prefix, addr_str, sizeof(addr_str))) {
+		DEBUG_MSG("prefix: %s", addr_str);
+	} else {
+		DEBUG_MSG("prefix: error");
+	}
 
 check_failed:
 	return;
@@ -595,6 +651,43 @@ static void update_tqs(void) {
 	}
 }
 
+static void update_redirect(void) {
+	struct router *router;
+	struct timespec timeout = {
+		.tv_nsec = EBTABLES_TIMEOUT,
+	};
+
+	foreach(router, G.routers) {
+		char mac[F_MAC_LEN + 1];
+		char addr[INET6_ADDRSTRLEN];
+		char prefix[INET6_ADDRSTRLEN];
+
+		if (router->redirected)
+		    continue;
+		router->redirected = true;
+
+		snprintf(mac, sizeof(mac), F_MAC, F_MAC_VAR(router->src));
+
+		if (inet_ntop(AF_INET6, &router->prefix, addr, sizeof(addr)) == NULL) {
+			error_message(0, 0, "warning: failed to format prefix");
+			continue;
+		}
+		snprintf(prefix, sizeof(prefix), "%s/64", addr);
+
+		if (fork_execvp_timeout(&timeout, "ebtables-tiny", (const char *[])
+			{ "ebtables-tiny", "-t", "nat", "-A", "REDIRECT",
+			"-p", "IPv6",
+			"--ip6-source", prefix,
+			"--ip6-destination", "!", prefix,
+			"-d", "!",  mac,
+			"-j", "dnat",
+			"--to-destination", mac,
+			NULL }))
+		error_message(0, 0, "warning: adding new rule to ebtables chain REDIRECT failed");
+	}
+}
+
+
 static int fork_execvp_timeout(struct timespec *timeout, const char *file, const char *const argv[]) {
 	int ret;
 	pid_t child;
@@ -769,6 +862,8 @@ int main(int argc, char *argv[]) {
 		if (G.routers != NULL &&
 				timespec_diff(&now, &next_update, &diff)) {
 			expire_routers();
+
+			update_redirect();
 
 			// all routers could have expired, check again
 			if (G.routers != NULL) {

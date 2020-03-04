@@ -4,6 +4,7 @@
 #include <libgluonutil.h>
 #include <net/ethernet.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "mac.h"
 
