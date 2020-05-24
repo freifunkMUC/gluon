@@ -1,16 +1,17 @@
 #!/usr/bin/lua
 
-local site = require "gluon.site"
+local json=require("jsonc")
+local f = assert(io.popen("ip -6 -br -j addr show dev br-client scope link", 'r'))
+local s = assert(f:read('*a'))                                                    
+f:close()                                                                         
+local ll = json.parse(s)[1]["addr_info"][2]["local"]
 
 local f = io.open("/tmp/range6","r")
-local g = io.open("/tmp/addr6", "r")
 
-if f and g then
+if f then
     local range6 = f:read('*a')
-    local addr6  = g:read('*a')
     f:close()
-    g:close()
 
     io.write("-i br-client -p " .. range6)
-    io.write(" --rdnss " .. addr6)
+    io.write(" --rdnss " .. ll)
 end
