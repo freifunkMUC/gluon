@@ -1,11 +1,4 @@
-local vpn = require 'gluon.mesh-vpn'
-local _, active_vpn = vpn.get_active_provider()
-
 return function(form, uci)
-	if active_vpn == nil then
-		return
-	end
-
 	local pkg_i18n = i18n 'gluon-config-mode-mesh-vpn'
 
 	local msg = pkg_i18n.translate(
