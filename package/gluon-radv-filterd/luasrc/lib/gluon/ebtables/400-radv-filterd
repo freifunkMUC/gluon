@@ -2,6 +2,7 @@ chain('RADV_FILTER', 'DROP')
 rule 'FORWARD -p IPv6 -i bat0 --ip6-protocol ipv6-icmp --ip6-icmp-type router-advertisement -j RADV_FILTER'
 rule 'RADV_FILTER -j ACCEPT'
 
+chain('REDIRECT_FILTER', 'RETURN', 'nat')
 chain('REDIRECT', 'RETURN', 'nat')
-rule('PREROUTING -p IPv6 --logical-in br-client --ip6-destination 2000::/3 -j REDIRECT', 'nat')
-rule('OUTPUT -p IPv6 --logical-out br-client --ip6-destination 2000::/3 -j REDIRECT', 'nat')
+rule('PREROUTING -p IPv6 --logical-in br-client --ip6-destination 2000::/3 -j REDIRECT_FILTER', 'nat')
+rule('OUTPUT -p IPv6 --logical-out br-client --ip6-destination 2000::/3 -j REDIRECT_FILTER', 'nat')

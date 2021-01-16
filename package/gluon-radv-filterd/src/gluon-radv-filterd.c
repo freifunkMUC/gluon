@@ -165,6 +165,10 @@ static void cleanup(void) {
 			DEBUG_MSG("warning: adding new rule to ebtables chain %s failed", G.chain);
 
 		if (fork_execvp_timeout(&timeout, "ebtables-tiny", (const char *[])
+				{ "ebtables-tiny", "-t", "nat", "-F", "REDIRECT_FILTER", NULL}))
+			DEBUG_MSG("warning: flushing ebtables nat chain REDIRECT_FILTER failed", G.chain);
+
+		if (fork_execvp_timeout(&timeout, "ebtables-tiny", (const char *[])
 				{ "ebtables-tiny", "-t", "nat", "-F", "REDIRECT", NULL}))
 			DEBUG_MSG("warning: flushing ebtables nat chain REDIRECT failed", G.chain);
 	}
@@ -673,6 +677,13 @@ static void update_redirect(void) {
 			continue;
 		}
 		snprintf(prefix, sizeof(prefix), "%s/64", addr);
+
+		if (fork_execvp_timeout(&timeout, "ebtables-tiny", (const char *[])
+			{ "ebtables-tiny", "-t", "nat", "-A", "REDIRECT_FILTER",
+			"-d", mac,
+			"-j", "REDIRECT",
+			NULL }))
+		error_message(0, 0, "warning: adding new rule to ebtables chain REDIRECT_FILTER failed");
 
 		if (fork_execvp_timeout(&timeout, "ebtables-tiny", (const char *[])
 			{ "ebtables-tiny", "-t", "nat", "-A", "REDIRECT",
