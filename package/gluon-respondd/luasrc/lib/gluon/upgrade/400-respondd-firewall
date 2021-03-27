@@ -33,14 +33,6 @@ uci:section('firewall', 'rule',  'mesh_respondd_ll', {
 	target = 'ACCEPT',
 })
 
-uci:section('firewall', 'rule',  'mesh_respondd_siteprefix', {
-	name = 'mesh_respondd_siteprefix',
-	src = 'mesh',
-	src_ip = site.prefix6(),
-	dest_port = '1001',
-	proto = 'udp',
-	target = 'ACCEPT',
-})
 
 uci:delete_all('firewall', 'rule', function(rule)
 	return rule['.name']:find('^mesh_respondd_extraprefix')
