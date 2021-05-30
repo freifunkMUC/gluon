@@ -63,7 +63,43 @@ end
 entry({}, call(function(http, renderer)
 	local nodeinfo = json.parse(util.exec('exec gluon-neighbour-info -d ::1 -p 1001 -t 3 -c 1 -r nodeinfo'))
 
-	-- TODO: Add a redirect to a local v6 addr for parker
+	local node_ip = parse_ip(http:getenv('SERVER_ADDR'))
+	if node_ip then
+		if match(node_ip, parse_ip(site.next_node.ip6()), 8) then
+			-- The user has visited the status page via the ipv6 next-node address
+			-- Redirect the user to a unique ipv6 address to avoid switching nodes
+			-- if there is an address matching the first 64bit of the requesting address
+			local remote_ip = parse_ip(http:getenv('REMOTE_ADDR'))
+			if remote_ip then
+				for _, addr in ipairs(nodeinfo.network.addresses) do
+					if match(remote_ip, parse_ip(addr), 4) then
+						http:header('Cache-Control', 'no-cache, no-store, must-revalidate')
+						http:redirect('http://[' .. addr .. ']' .. http:getenv('REQUEST_URI'))
+						http:close()
+						return
+					end
+				end
+			end
+		end
+		if match(node_ip, parse_ip(site.next_node.ip4()), 4) then
+			-- The user has visited the status page via the ipv4 next-node address
+			-- Redirect the user to our unique ipv4 address to avoid switching nodes
+			local process = io.popen('ip -br -4 address show br-client', 'r')
+			if process then
+				local output = process:read('*a')
+				process:close()
+				if output then
+					local addr = string.match(output, '%d+%.%d+%.%d+%.%d+')
+					if addr then
+						http:header('Cache-Control', 'no-cache, no-store, must-revalidate')
+						http:redirect('http://' .. addr .. http:getenv('REQUEST_URI'))
+						http:close()
+						return
+					end
+				end
+			end
+		end
+	end
 
 	renderer.render('status-page', { nodeinfo = nodeinfo, site = site }, 'gluon-status-page')
 end))
