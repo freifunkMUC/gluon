@@ -39,20 +39,20 @@ static struct json_object * get_radv_filter() {
 }
 
 static struct json_object * respondd_provider_statistics() {
+	struct json_object *ret = json_object_new_object();
 	char buf[6];
 	int fd = open("/sys/class/net/bat0/mesh/gw_mode", O_RDONLY);
 	if (fd == -1) {
 		perror("error opening gateway info file");
-		return NULL;
+		return ret;
 	}
 	memset(buf, 0, sizeof(buf));
 	read(fd, buf, sizeof(buf));
 	close(fd);
 	if (strncmp(buf, "server", 6) == 0) {
 		// We are a batman gateway, do not write gateway6
-		return NULL;
+		return ret;
 	}
-	struct json_object *ret = json_object_new_object();
 
 	json_object_object_add(ret, "gateway6", get_radv_filter());
 
