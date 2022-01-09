@@ -117,6 +117,8 @@
 			statistics(key .. '/bytes', 'bytes')
 		)
 	end
+	
+	local wg_pubkey = util.readfile('/etc/parker/wg-pubkey')
 
 	http:prepare_content("text/html")
 -%>
@@ -204,6 +206,10 @@
 						<% if nodeinfo.software['batman-adv'] then -%>
 						<dd>batman-adv <%| nodeinfo.software['batman-adv'].version %> (compat<%| nodeinfo.software['batman-adv'].compat %>)</dd>
 						<%- end %>
+					<%- end %>
+					<% if wg_pubkey then -%>
+					  <dt>Wireguard Key</dt>
+					  <dd><%| wg_pubkey %></dd>
 					<%- end %>
 				</dl>
 			</div>
