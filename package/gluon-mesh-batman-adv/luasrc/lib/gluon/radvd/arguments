@@ -1,10 +1,7 @@
 #!/usr/bin/lua
 
 local json=require("jsonc")
-local f = assert(io.popen("ip -6 -br -j addr show dev br-client scope link", 'r'))
-local s = assert(f:read('*a'))                                                    
-f:close()                                                                         
-local ll = json.parse(s)[1]["addr_info"][2]["local"]
+local ll = "2001:bf7:382::1"
 
 local f = io.open("/tmp/range6","r")
 
