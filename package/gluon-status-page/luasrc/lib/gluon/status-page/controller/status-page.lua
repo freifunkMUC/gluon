@@ -84,7 +84,7 @@ entry({}, call(function(http, renderer)
 		if match(node_ip, parse_ip(site.next_node.ip4()), 4) then
 			-- The user has visited the status page via the ipv4 next-node address
 			-- Redirect the user to our unique ipv4 address to avoid switching nodes
-			local process = io.popen('ip -br -4 address show br-client', 'r')
+			local process = io.popen('ip -4 a show dev br-client','r')
 			if process then
 				local output = process:read('*a')
 				process:close()
