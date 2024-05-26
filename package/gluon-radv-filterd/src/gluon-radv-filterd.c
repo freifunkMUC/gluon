@@ -92,6 +92,7 @@ struct router {
 	struct ether_addr originator;
 	uint16_t tq;
 	bool redirected;
+	bool expired;
 	struct in6_addr lladdr;
 	struct in6_addr prefix;
 };
@@ -300,6 +301,9 @@ static struct router *router_find_src(const struct ether_addr *src) {
 	struct router *router;
 
 	foreach(router, G.routers) {
+		if (router->expired)
+			continue;
+
 		if (ether_addr_equal(router->src, *src))
 			return router;
 	}
@@ -311,6 +315,9 @@ static struct router *router_find_orig(const struct ether_addr *orig) {
 	struct router *router;
 
 	foreach(router, G.routers) {
+		if (router->expired)
+			continue;
+
 		if (ether_addr_equal(router->originator, *orig))
 			return router;
 	}
@@ -320,6 +327,13 @@ static struct router *router_find_orig(const struct ether_addr *orig) {
 
 static struct router *router_add(const struct ether_addr *mac) {
 	struct router *router;
+
+	foreach(router, G.routers) {
+		if (ether_addr_equal(router->src, *mac)) {
+			router->expired = false;
+			return router;
+		}
+	}
 
 	router = calloc(1, sizeof(*router));
 	if (!router)
@@ -417,7 +431,6 @@ check_failed:
 }
 
 static void expire_routers(void) {
-	struct router **prev_ptr = &G.routers;
 	struct router *router;
 	struct router *safe;
 	struct timespec now;
@@ -425,15 +438,12 @@ static void expire_routers(void) {
 
 	clock_gettime(CLOCK_MONOTONIC, &now);
 
-	foreach_safe(router, safe, G.routers) {
+	foreach(router, G.routers) {
 		if (timespec_diff(&now, &router->eol, &diff)) {
 			DEBUG_MSG("router " F_MAC " expired", F_MAC_VAR(router->src));
-			*prev_ptr = router->next;
 			if (G.best_router == router)
 				G.best_router = NULL;
-			free(router);
-		} else {
-			prev_ptr = &router->next;
+			router->expired = true;
 		}
 	}
 }
@@ -628,6 +638,9 @@ static void update_tqs(void) {
 
 	// if all routers have a TQ value, we don't need to check translocal
 	foreach(router, G.routers) {
+		if (router->expired)
+			continue;
+
 		if (router->tq == 0)
 			break;
 	}
@@ -641,6 +654,9 @@ static void update_tqs(void) {
 	}
 
 	foreach(router, G.routers) {
+		if (router->expired)
+			continue;
+
 		if (router->tq == 0) {
 			if (ether_addr_equal(router->originator, unspec))
 				DEBUG_MSG(
@@ -666,7 +682,7 @@ static void update_redirect(void) {
 		char addr[INET6_ADDRSTRLEN];
 		char prefix[INET6_ADDRSTRLEN];
 
-		if (router->redirected)
+		if (router->redirected || router->expired)
 		    continue;
 		router->redirected = true;
 
@@ -784,6 +800,9 @@ static void update_ebtables(void) {
 	}
 
 	foreach(router, G.routers) {
+		if (router->expired)
+			continue;
+
 		if (router->tq == G.max_tq) {
 			snprintf(mac, sizeof(mac), F_MAC, F_MAC_VAR(router->src));
 			break;
