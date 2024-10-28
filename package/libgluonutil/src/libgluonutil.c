@@ -17,6 +17,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <math.h>
 
 /**
  * Merges two JSON objects
@@ -304,6 +305,14 @@ char * gluonutil_get_primary_domain(void) {
 	return strdup(primary_domain_code);
 }
 
+uint8_t gluonutil_get_pseudo_tq(uint32_t throughput) {
+	return throughput >= 54000 ? 255 :
+			throughput < 417 ? 0 :
+			(uint8_t)((1.42459274279287898080 *
+						log2(throughput) -
+						12.39555493934044793479) *
+						25.5);
+}
 
 struct json_object * gluonutil_load_site_config(void) {
 	char *domain_code = NULL;
