@@ -44,22 +44,21 @@ static struct json_object * ifnames2addrs(struct json_object *interfaces) {
 	return ret;
 }
 
-static const enum batadv_nl_attrs parse_orig_list_mandatory[] = {
-	BATADV_ATTR_ORIG_ADDRESS,
+static const enum batadv_nl_attrs parse_neigh_list_mandatory[] = {
 	BATADV_ATTR_NEIGH_ADDRESS,
-	BATADV_ATTR_TQ,
+       BATADV_ATTR_THROUGHPUT,
 	BATADV_ATTR_HARD_IFINDEX,
 	BATADV_ATTR_LAST_SEEN_MSECS,
 };
 
-static int parse_orig_list_netlink_cb(struct nl_msg *msg, void *arg)
+static int parse_neigh_list_netlink_cb(struct nl_msg *msg, void *arg)
 {
 	struct nlattr *attrs[BATADV_ATTR_MAX+1];
 	struct nlmsghdr *nlh = nlmsg_hdr(msg);
 	struct batadv_nlquery_opts *query_opts = arg;
 	struct genlmsghdr *ghdr;
-	uint8_t *orig;
-	uint8_t *dest;
+       uint8_t *neigh;
+       uint32_t throughput;
 	uint8_t tq;
 	uint32_t hardif;
 	uint32_t lastseen;
@@ -75,32 +74,28 @@ static int parse_orig_list_netlink_cb(struct nl_msg *msg, void *arg)
 
 	ghdr = nlmsg_data(nlh);
 
-	if (ghdr->cmd != BATADV_CMD_GET_ORIGINATORS)
+       if (ghdr->cmd != BATADV_CMD_GET_NEIGHBORS)
 		return NL_OK;
 
 	if (nla_parse(attrs, BATADV_ATTR_MAX, genlmsg_attrdata(ghdr, 0),
 				genlmsg_len(ghdr), batadv_genl_policy))
 		return NL_OK;
-
-	if (batadv_genl_missing_attrs(attrs, parse_orig_list_mandatory,
-				BATADV_ARRAY_SIZE(parse_orig_list_mandatory)))
+       
+       if (batadv_genl_missing_attrs(attrs, parse_neigh_list_mandatory,
+                                     BATADV_ARRAY_SIZE(parse_neigh_list_mandatory)))
 		return NL_OK;
 
-	orig = nla_data(attrs[BATADV_ATTR_ORIG_ADDRESS]);
-	dest = nla_data(attrs[BATADV_ATTR_NEIGH_ADDRESS]);
-	tq = nla_get_u8(attrs[BATADV_ATTR_TQ]);
+       neigh = nla_data(attrs[BATADV_ATTR_NEIGH_ADDRESS]);
+       throughput = nla_get_u32(attrs[BATADV_ATTR_THROUGHPUT]);
 	hardif = nla_get_u32(attrs[BATADV_ATTR_HARD_IFINDEX]);
 	lastseen = nla_get_u32(attrs[BATADV_ATTR_LAST_SEEN_MSECS]);
-
-	if (memcmp(orig, dest, 6) != 0)
-		return NL_OK;
 
 	ifname = if_indextoname(hardif, ifname_buf);
 	if (!ifname)
 		return NL_OK;
 
 	sprintf(mac1, "%02x:%02x:%02x:%02x:%02x:%02x",
-		orig[0], orig[1], orig[2], orig[3], orig[4], orig[5]);
+               neigh[0], neigh[1], neigh[2], neigh[3], neigh[4], neigh[5]);
 
 	struct json_object *obj = json_object_new_object();
 	if (!obj)
@@ -111,6 +106,8 @@ static int parse_orig_list_netlink_cb(struct nl_msg *msg, void *arg)
 		interface = json_object_new_object();
 		json_object_object_add(opts->interfaces, ifname, interface);
 	}
+
+       tq = gluonutil_get_pseudo_tq(throughput);
 
 	json_object_object_add(obj, "tq", json_object_new_int(tq));
 	json_object_object_add(obj, "lastseen", json_object_new_double(lastseen / 1000.));
@@ -132,8 +129,8 @@ static struct json_object * get_batadv(void) {
 	if (!opts.interfaces)
 		return NULL;
 
-	ret = batadv_genl_query("bat0", BATADV_CMD_GET_ORIGINATORS,
-				parse_orig_list_netlink_cb, NLM_F_DUMP,
+       ret = batadv_genl_query("bat0", BATADV_CMD_GET_NEIGHBORS,
+                               parse_neigh_list_netlink_cb, NLM_F_DUMP,
 				&opts.query_opts);
 	if (ret < 0) {
 		json_object_put(opts.interfaces);
