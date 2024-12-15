@@ -63,24 +63,7 @@ end
 entry({}, call(function(http, renderer)
 	local nodeinfo = json.parse(util.exec('exec gluon-neighbour-info -d ::1 -p 1001 -t 3 -c 1 -r nodeinfo'))
 
-	local node_ip = parse_ip(http:getenv('SERVER_ADDR'))
-	if node_ip and (
-			match(node_ip, parse_ip(site.next_node.ip4()), 8) or
-			match(node_ip, parse_ip(site.next_node.ip6()), 8)
-	) then
-		-- The user has visited the status page via a next-node address
-		-- Redirect the user to a unique address to avoid switching nodes
-		local prefix = parse_ip(site.prefix6():match('^[^/]+'))
-		for _, addr in ipairs(nodeinfo.network.addresses) do
-			if match(prefix, parse_ip(addr), 4) then
-				http:header('Cache-Control', 'no-cache, no-store, must-revalidate')
-				http:redirect('http://[' .. addr .. ']' .. http:getenv('REQUEST_URI'))
-				http:close()
-				return
-			end
-		end
-	end
-
+	-- TODO: Add a redirect to a local v6 addr for parker
 
 	renderer.render('status-page', { nodeinfo = nodeinfo, site = site }, 'gluon-status-page')
 end))
