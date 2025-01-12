@@ -1,0 +1,24 @@
+From: Nico <github@nicoboehr.de>
+Date: Sun, 12 Jan 2025 18:03:31 +0000
+Subject: add patch to adjust reset timings
+
+diff --git a/target/linux/ath79/patches-6.6/102-ath79-adjust-reset-timings.patch b/target/linux/ath79/patches-6.6/102-ath79-adjust-reset-timings.patch
+new file mode 100644
+index 0000000000000000000000000000000000000000..ef5f05f02d801056034d1b3d40303a5e401d92c0
+--- /dev/null
++++ b/target/linux/ath79/patches-6.6/102-ath79-adjust-reset-timings.patch
+@@ -0,0 +1,14 @@
++--- a/drivers/reset/reset-ath79.c
+++++ b/drivers/reset/reset-ath79.c
++@@ -102,9 +102,9 @@ static int ath79_reset_restart_handler(s
++ 		 * full chip reset. See page 111 of the AR9344 datasheet.
++ 		 */
++ 		__ath79_reset_update_unlocked(ath79_reset, ETH_SWITCH_RESET, true);
++-		mdelay(10);
+++		mdelay(1);
++ 		__ath79_reset_update_unlocked(ath79_reset, ETH_SWITCH_ARESET, true);
++-		mdelay(10);
+++		mdelay(1);
++ 	}
++ 
++ 	__ath79_reset_update_unlocked(ath79_reset, FULL_CHIP_RESET, true);
