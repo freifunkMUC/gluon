@@ -51,8 +51,8 @@
 // seconds). Re-read it from the transtable afterwards.
 #define ORIGINATOR_CACHE_TTL 300
 
-// max execution time of a single ebtables call in nanoseconds
-#define EBTABLES_TIMEOUT 500000000 // 500ms
+// max execution time of a single ebtables call in seconds
+#define EBTABLES_TIMEOUT 2
 
 // TQ value assigned to local routers
 #define LOCAL_TQ 512
@@ -141,7 +141,7 @@ static int timespec_diff(struct timespec *tv1, struct timespec *tv2,
 static void cleanup(void) {
 	struct router *router;
 	struct timespec timeout = {
-		.tv_nsec = EBTABLES_TIMEOUT,
+		.tv_sec = EBTABLES_TIMEOUT,
 	};
 
 	close(G.sock);
@@ -721,7 +721,7 @@ static bool election_required(void)
 
 static void update_ebtables(void) {
 	struct timespec timeout = {
-		.tv_nsec = EBTABLES_TIMEOUT,
+		.tv_sec = EBTABLES_TIMEOUT,
 	};
 	char mac[F_MAC_LEN + 1];
 	struct router *router;
