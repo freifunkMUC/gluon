@@ -237,7 +237,7 @@ static int init_packet_socket(unsigned int ifindex) {
 
 	struct sockaddr_ll bind_iface = {
 		.sll_family = AF_PACKET,
-		.sll_protocol = htons(ETH_P_IPV6),
+		.sll_protocol = htons(ETH_P_ALL), /* seems needed to recieve packets on bat0 */
 		.sll_ifindex = ifindex,
 	};
 	ret = bind(sock, (struct sockaddr *)&bind_iface, sizeof(bind_iface));
