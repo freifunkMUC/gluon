@@ -46,6 +46,7 @@ function M.is_outdoor_device()
 		'ubnt,nanobeam-ac-xc',
 		'ubnt,nanostation-loco-m-xw',
 		'ubnt,nanostation-m-xw',
+		'ubnt,rocket-m',
 		'ubnt,uk-ultra',
 		'ubnt,unifi-ap-outdoor-plus',
 		'ubnt,unifiac-mesh',
@@ -76,6 +77,7 @@ function M.is_outdoor_device()
 		return true
 
 	elseif M.match('ramips', 'mt7621', {
+		'cudy,ap1300-outdoor-v1',
 		'wavlink,ws-wn572hp3-4g',
 		'zyxel,nwa55axe',
 	}) then

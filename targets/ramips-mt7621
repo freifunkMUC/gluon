@@ -12,6 +12,10 @@ device('asus-rt-ax53u', 'asus_rt-ax53u')
 
 -- Cudy
 
+device('cudy-ap1300-outdoor-v1', 'cudy_ap1300-outdoor-v1',{
+	factory = false,
+})
+
 device('cudy-wr1300-v1', 'cudy_wr1300-v1', {
 	factory = false,
 	manifest_aliases = {
@@ -122,6 +126,11 @@ device('tp-link-re500-v1', 'tplink_re500-v1')
 
 device('tp-link-re650-v1', 'tplink_re650-v1')
 
+-- Totolink
+
+device('totolink-x5000r', 'totolink_x5000r', {
+		factory = false,
+})
 
 -- Ubiquiti
 

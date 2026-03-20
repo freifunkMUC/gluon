@@ -153,12 +153,17 @@ ath79-generic
   - WBS210 (v1.20, v2.0)
   - WBS510 (v1.20)
 
+* Totolink 
+
+  - X5000R (v1)
+
 * Ubiquiti
 
   - NanoBeam 5AC 19 (XC)
   - NanoBeam M5 (XW)
   - NanoStation Loco M2/M5 (XW)
   - NanoStation M2/M5 (XW)
+  - Rocket M2/M5 (XM)
   - UniFi AC Lite
   - UniFi AC LR
   - UniFi AC Mesh
@@ -339,9 +344,13 @@ mediatek-filogic
 * Cudy
 
   - AP3000 Outdoor (v1)
+  - M3000 (v1)
+  - RE3000 (v1)
   - TR3000 (v1)
   - WR3000 (v1)
   - WR3000e (v1)
+  - WR3000h (v1)
+  - WR3000s (v1)
 
 * D-Link
 
@@ -390,7 +399,7 @@ mediatek-mt7622
 
 * Ubiquiti
 
-  - UniFi 6 LR (v1)
+  - UniFi 6 LR (v1, v3)
 
 mvebu-cortexa53
 ---------------
@@ -488,6 +497,7 @@ ramips-mt7621
 
 * Cudy
 
+  - AP1300 Outdoor (v1)
   - WR1300 (v1)
   - WR2100
   - X6 (v1, v2)
@@ -511,6 +521,7 @@ ramips-mt7621
 * MERCUSYS
 
   - MR70X (v1)
+  - MR90X (v1)
 
 * NETGEAR
 
