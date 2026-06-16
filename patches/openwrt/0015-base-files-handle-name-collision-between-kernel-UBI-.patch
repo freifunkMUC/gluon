@@ -1,0 +1,35 @@
+From 16ceb91573f0bdf60bcdb0b897a512f00f8873f6 Mon Sep 17 00:00:00 2001
+From: Lukas Stockner <lukas@lukasstockner.de>
+Date: Sat, 2 May 2026 19:32:23 +0200
+Subject: [PATCH 2/5] base-files: handle name collision between kernel UBI
+ volume and MTD partition
+
+On the AP-325 (and variants), the bootloader enforces a particular UBI volume
+layout and naming, so unfortunately the kernel's UBI volume and MTD partition
+end up with the name, which confuses the current logic.
+
+Therefore, add an option to ignore the MTD partition.
+
+Signed-off-by: Lukas Stockner <lukas@lukasstockner.de>
+---
+ package/base-files/files/lib/upgrade/nand.sh | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/package/base-files/files/lib/upgrade/nand.sh b/package/base-files/files/lib/upgrade/nand.sh
+index bfe6027f24..0faa034934 100644
+--- a/package/base-files/files/lib/upgrade/nand.sh
++++ b/package/base-files/files/lib/upgrade/nand.sh
+@@ -318,6 +318,10 @@ nand_upgrade_tar() {
+ 	local rootfs_type
+ 	[ "$rootfs_length" ] && rootfs_type="$(identify_tar "$tar_file" "$cmd" "$board_dir/root")"
+ 
++	# If CI_SKIP_KERNEL_MTD is set, ignore any potential kernel MTD partition that was found.
++	# This is needed if there's an MTD partition with the same name as the kernel's UBI volume.
++	[ "${CI_SKIP_KERNEL_MTD:-}" ] && kernel_mtd=
++
+ 	local ubi_kernel_length
+ 	if [ "$kernel_length" ]; then
+ 		if [ "$kernel_mtd" ]; then
+-- 
+2.43.0
+

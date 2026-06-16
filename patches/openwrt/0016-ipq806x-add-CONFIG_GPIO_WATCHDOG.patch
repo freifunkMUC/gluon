@@ -1,0 +1,29 @@
+From 9e8b885f95b24e2e464fb6d66894280389edad39 Mon Sep 17 00:00:00 2001
+From: Lukas Stockner <lukas@lukasstockner.de>
+Date: Sat, 2 May 2026 20:11:04 +0200
+Subject: [PATCH 3/5] ipq806x: add CONFIG_GPIO_WATCHDOG
+
+The AP-325 (and variants) has an external watchdog, so this is needed to
+regularly toggle the GPIO and keep the watchdog happy.
+
+Signed-off-by: Lukas Stockner <lukas@lukasstockner.de>
+---
+ target/linux/ipq806x/config-6.6 | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/target/linux/ipq806x/config-6.6 b/target/linux/ipq806x/config-6.6
+index 7e9558ad75..59ab8b3c05 100644
+--- a/target/linux/ipq806x/config-6.6
++++ b/target/linux/ipq806x/config-6.6
+@@ -184,6 +184,8 @@ CONFIG_GENERIC_VDSO_32=y
+ CONFIG_GLOB=y
+ CONFIG_GPIOLIB_IRQCHIP=y
+ CONFIG_GPIO_CDEV=y
++CONFIG_GPIO_WATCHDOG=y
++CONFIG_GPIO_WATCHDOG_ARCH_INITCALL=y
+ CONFIG_GRO_CELLS=y
+ CONFIG_HARDEN_BRANCH_PREDICTOR=y
+ CONFIG_HARDIRQS_SW_RESEND=y
+-- 
+2.43.0
+
