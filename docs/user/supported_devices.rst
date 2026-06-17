@@ -636,6 +636,7 @@ rockchip-armv8
 * FriendlyElec
 
   - NanoPi R2S
+  - NanoPi R2S Plus
   - NanoPi R3S
   - NanoPi R4S (4GB LPDDR4)
 
