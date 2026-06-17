@@ -1,0 +1,127 @@
+From 67b39570083d8c3ee84448aa23198f341c93ab07 Mon Sep 17 00:00:00 2001
+From: Grische <github@grische.xyz>
+Date: Wed, 17 Jun 2026 14:09:18 +0200
+Subject: [PATCH 2/2] rockchip: Add support for FriendlyARM NanoPi R2S Plus
+
+The NanoPi R2S Plus is a NanoPi R2S with on-board eMMC added. The device
+tree (rk3328-nanopi-r2s-plus.dts) is already present in kernel 6.6.142,
+so only the image and board.d definitions are needed; the matching
+U-Boot is added separately.
+
+Hardware
+--------
+Rockchip RK3328 (4x Cortex-A53, up to 1.4 GHz)
+1GB DDR4 RAM
+32GB eMMC 5.1
+microSD slot (up to 128GB)
+1x 1000 Base-T (native, RTL8211F via GMAC) - WAN
+1x 1000 Base-T (USB 3.0, RTL8153B) - LAN
+Optional M.2 SDIO Wi-Fi
+2x USB 2.0 Type-A host
+1x USB-C (5V power input, USB device for Maskrom update)
+1x USB-C (onboard USB-to-UART debug console, 1500000 bps)
+1x serial debug header / UART0 (3.3V TTL, 3-pin 2.54mm)
+2 Buttons (GPIO key, Maskrom)
+3 LEDs (SYS red, WAN green, LAN green)
+DC 5V/2A power
+Operating temperature 0 to 70 C
+
+The MAC addresses are derived from the eMMC CID, so they are stable
+regardless of whether the device boots from microSD or eMMC.
+
+Installation
+------------
+
+On RK3328 the BootROM boots the eMMC before the microSD slot, so the
+Maskrom button must be held to boot from microSD while stock firmware is
+still on the eMMC.
+
+How to boot from eMMC:
+
+1. Write the uncompressed sysupgrade image to sdcard
+2. Hold the "Mask" button while powering on the device
+3. Wait until OpenWrt is fully booted
+4. Copy the compressed .gz sysupgrade image to the machine's /tmp folder using scp
+5. Run: gunzip -c /tmp/openwrt-...-friendlyarm_nanopi-r2s-plus-squashfs-sysupgrade.img.gz | dd of=/dev/mmcblk1 bs=4M conv=fsync
+6. Power the device off, remove the sdcard and power it back on
+
+Tested:
+- microSD boot (via Maskrom button) and native eMMC boot
+- Both Ethernet ports (RTL8211F WAN, RTL8153B LAN)
+- eMMC-derived MAC addresses
+
+Signed-off-by: Grische <github@grische.xyz>
+Assisted-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
+---
+ .../linux/rockchip/armv8/base-files/etc/board.d/01_leds   | 1 +
+ .../rockchip/armv8/base-files/etc/board.d/02_network      | 2 ++
+ .../base-files/etc/hotplug.d/net/40-net-smp-affinity      | 1 +
+ target/linux/rockchip/image/armv8.mk                      | 8 ++++++++
+ 4 files changed, 12 insertions(+)
+
+diff --git a/target/linux/rockchip/armv8/base-files/etc/board.d/01_leds b/target/linux/rockchip/armv8/base-files/etc/board.d/01_leds
+index 6e2c95ada7..e4e41a95a9 100644
+--- a/target/linux/rockchip/armv8/base-files/etc/board.d/01_leds
++++ b/target/linux/rockchip/armv8/base-files/etc/board.d/01_leds
+@@ -11,6 +11,7 @@ case $board in
+ friendlyarm,nanopi-r2c|\
+ friendlyarm,nanopi-r2c-plus|\
+ friendlyarm,nanopi-r2s|\
++friendlyarm,nanopi-r2s-plus|\
+ friendlyarm,nanopi-r3s|\
+ friendlyarm,nanopi-r4s|\
+ friendlyarm,nanopi-r4s-enterprise|\
+diff --git a/target/linux/rockchip/armv8/base-files/etc/board.d/02_network b/target/linux/rockchip/armv8/base-files/etc/board.d/02_network
+index 606e77410b..bd4c135b8e 100644
+--- a/target/linux/rockchip/armv8/base-files/etc/board.d/02_network
++++ b/target/linux/rockchip/armv8/base-files/etc/board.d/02_network
+@@ -11,6 +11,7 @@ rockchip_setup_interfaces()
+ 	friendlyarm,nanopi-r2c|\
+ 	friendlyarm,nanopi-r2c-plus|\
+ 	friendlyarm,nanopi-r2s|\
++	friendlyarm,nanopi-r2s-plus|\
+ 	friendlyarm,nanopi-r3s|\
+ 	friendlyarm,nanopi-r4s|\
+ 	friendlyarm,nanopi-r4s-enterprise|\
+@@ -65,6 +66,7 @@ rockchip_setup_macs()
+ 		lan_mac=$(macaddr_add "$wan_mac" 1)
+ 		;;
+ 	friendlyarm,nanopi-r2c-plus|\
++	friendlyarm,nanopi-r2s-plus|\
+ 	friendlyarm,nanopi-r4s|\
+ 	friendlyarm,nanopi-r5s|\
+ 	sinovoip,rk3568-bpi-r2pro)
+diff --git a/target/linux/rockchip/armv8/base-files/etc/hotplug.d/net/40-net-smp-affinity b/target/linux/rockchip/armv8/base-files/etc/hotplug.d/net/40-net-smp-affinity
+index 9277dad3e7..313f950234 100644
+--- a/target/linux/rockchip/armv8/base-files/etc/hotplug.d/net/40-net-smp-affinity
++++ b/target/linux/rockchip/armv8/base-files/etc/hotplug.d/net/40-net-smp-affinity
+@@ -42,6 +42,7 @@ sinovoip,rk3568-bpi-r2pro)
+ friendlyarm,nanopi-r2c|\
+ friendlyarm,nanopi-r2c-plus|\
+ friendlyarm,nanopi-r2s|\
++friendlyarm,nanopi-r2s-plus|\
+ radxa,cm3-io|\
+ xunlong,orangepi-r1-plus|\
+ xunlong,orangepi-r1-plus-lts)
+diff --git a/target/linux/rockchip/image/armv8.mk b/target/linux/rockchip/image/armv8.mk
+index c28835d5cd..2fa503012d 100644
+--- a/target/linux/rockchip/image/armv8.mk
++++ b/target/linux/rockchip/image/armv8.mk
+@@ -65,6 +65,14 @@ define Device/friendlyarm_nanopi-r2s
+ endef
+ TARGET_DEVICES += friendlyarm_nanopi-r2s
+ 
++define Device/friendlyarm_nanopi-r2s-plus
++  DEVICE_VENDOR := FriendlyARM
++  DEVICE_MODEL := NanoPi R2S Plus
++  SOC := rk3328
++  DEVICE_PACKAGES := kmod-usb-net-rtl8152
++endef
++TARGET_DEVICES += friendlyarm_nanopi-r2s-plus
++
+ define Device/friendlyarm_nanopi-r3s
+   DEVICE_VENDOR := FriendlyARM
+   DEVICE_MODEL := NanoPi R3S
+-- 
+2.54.0
+
