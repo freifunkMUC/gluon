@@ -97,6 +97,10 @@ struct router {
 
 static struct global {
 	int sock;
+	/* set while the chain is intentionally left empty because no
+	 * unexpired router is known, so that all router advertisements are
+	 * dropped by its policy */
+	bool drop_all;
 	struct router *routers;
 	const char *mesh_iface;
 	const char *chain;
@@ -756,8 +760,28 @@ static int fork_execvp_timeout(struct timespec *timeout, const char *file, const
 	return -1;
 }
 
+/* Whether any router is still alive. The maximum metric is only ever taken
+ * from unexpired routers, so as long as one of them is left, at least one of
+ * them matches the maximum and can be elected.
+ */
+static bool have_active_router(void)
+{
+	struct router *router;
+
+	foreach(router, G.routers) {
+		if (!router->expired)
+			return true;
+	}
+
+	return false;
+}
+
 static bool election_required(void)
 {
+	/* Only meaningful while a router is left to elect: update_ebtables()
+	 * checks have_active_router() itself, as G.best_router may also be
+	 * NULL because there is no candidate at all.
+	 */
 	if (!G.best_router)
 		return true;
 
@@ -775,7 +799,7 @@ static void update_ebtables(void) {
 	struct timespec timeout = {
 		.tv_sec = EBTABLES_TIMEOUT,
 	};
-	char mac[F_MAC_LEN + 1];
+	char mac[F_MAC_LEN + 1] = "";
 	struct router *router;
 
 	if (!election_required()) {
@@ -785,6 +809,28 @@ static void update_ebtables(void) {
 			G.max_tq);
 		return;
 	}
+
+	if (!have_active_router()) {
+		/* Nothing to elect. Leave the chain empty, so that its DROP
+		 * policy keeps filtering every forwarded router advertisement,
+		 * and don't touch ebtables again until a router shows up.
+		 */
+		if (G.drop_all)
+			return;
+
+		fprintf(stderr, "No router left, dropping all router advertisements\n");
+
+		G.best_router = NULL;
+		G.drop_all = true;
+
+		if (fork_execvp_timeout(&timeout, "ebtables-tiny", (const char *[])
+				{ "ebtables-tiny", "-F", G.chain, NULL }))
+			error_message(0, 0, "warning: flushing ebtables chain %s failed", G.chain);
+
+		return;
+	}
+
+	G.drop_all = false;
 
 	foreach(router, G.routers) {
 		if (router->expired)
